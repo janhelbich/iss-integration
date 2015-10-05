@@ -3,7 +3,7 @@ package cz.cvut.fel.iss.integration;
 import org.apache.camel.builder.RouteBuilder;
 
 /**
- * A Camel Java DSL Router
+ * Objednavka Endpoint
  */
 public class MyRouteBuilder extends RouteBuilder {
 
@@ -11,6 +11,16 @@ public class MyRouteBuilder extends RouteBuilder {
      * Let's configure the Camel routing rules using Java code...
      */
     public void configure() {
+
+        //REST endpoint
+
+
+
+        //SOAP endpoint
+
+
+
+        //ROUTY
 
         // here is a sample which processes the input files
         // (leaving them in place - see the 'noop' flag)
