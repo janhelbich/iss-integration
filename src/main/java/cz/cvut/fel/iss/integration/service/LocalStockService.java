@@ -7,10 +7,13 @@
 package cz.cvut.fel.iss.integration.service;
 
 import cz.cvut.fel.iss.integration.model.Item;
+import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import org.apache.camel.Handler;
 
 /**
  *
@@ -42,6 +45,7 @@ public class LocalStockService {
      * @return TRUE if here is atleast wanted amount of wanted Item in local stock.
      * FALSE otherwise.
      */
+    @Handler
     public boolean isInStock(Item wantedItem){
         
         if(this.localStock.containsKey(wantedItem.getSku())){
@@ -56,4 +60,81 @@ public class LocalStockService {
         }
     }
     
+    /**
+     * Selects cheaper supplier which have wanted amount of Item.
+     * It also checks if wantedItem is the same item as items from 
+     * supplierA and supplierB
+     * @param wantedItem Wanted Item with defined wanted amount
+     * @param itemA item state at supplierA, price and amount 
+     * @param itemB item state at supplierB, price and amount
+     * @return Selected cheaper Item or null if no supplier have wanted amount.
+     * @throws InvalidObjednavkaDataFormat If given items are not the same.
+     */
+    @Handler
+    public Item selectCheaperItem(Item wantedItem, Item itemA, Item itemB) throws InvalidObjednavkaDataFormat{
+        //TODO vracim Item, nevybiram dodavatele, coz asi bude potreba
+        //TODO tady si to mozna rika o porovnani rovnou i s cenou wantedItemu
+        //TODO wantedItem mam zmenit na nejakou jinou tridu OurSystemDefinedItem! at se to neplete s Item-em co maji v jinejch systemech
+        
+        if( !wantedItem.getSku().equals(itemA.getSku()) && !itemA.getSku().equals(itemB.getSku()) ){
+            //not the same items
+            throw new InvalidObjednavkaDataFormat();
+        }
+        
+        int wantedAmount = wantedItem.getAmount();
+        if(itemA.getAmount() >= wantedAmount && itemB.getAmount() >= wantedAmount){
+            if(itemA.getPrice().compareTo(itemB.getPrice()) <= 0){
+                return itemA;
+            } else {
+                return itemB;
+            }
+        } else if(itemA.getAmount() >= wantedAmount){
+            return itemA;
+        } else if(itemA.getAmount() >= wantedAmount){
+            return itemB;
+        }
+        //both of suppliers do not have wanted amount
+        return null;
+    }
+    
+    /**
+     * Checks if price of given item is higher than price in local stock.
+     * @param supplierItem Selected item from supplier.
+     * @return True if price of given item is higher. False otherwise.
+     */
+    @Handler
+    public boolean isPriceHigherThanLocal(Item supplierItem ){
+        BigDecimal priceInLocalStock = this.getItem(supplierItem.getSku()).getPrice();
+        return (supplierItem.getPrice().compareTo(priceInLocalStock) > 0);
+    }
+    
+    /**
+     * Removes wanted amount of Item from local stock.
+     * @param processedItem item which amount should be decreased in local stock
+     * @return True if it was removed, False if there is not enough pieces.
+     */
+    @Handler
+    public boolean removeNumberOfItemsFromStock(Item processedItem){
+        //TODO do it in some transaction
+        Item itemInStock = getItem(processedItem.getSku());
+        if(itemInStock.getAmount() >= processedItem.getAmount()){
+            itemInStock.setAmount( itemInStock.getAmount() - processedItem.getAmount());
+            
+            //I am not sure if this step is neccessary
+            this.localStock.put(itemInStock.getSku(), itemInStock);
+            return true;
+        } else {
+            //not enough items in local stock
+            return false;
+        }
+    } 
+    
+    /**
+     * Gets item from local stock based on it's identifier (.sku)
+     * @param itemId item's identifier
+     * @return wanted Item or null
+     */
+    private Item getItem(String itemId){
+        return this.localStock.get(itemId);
+    }
 }

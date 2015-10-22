@@ -5,6 +5,7 @@ import cz.cvut.fel.iss.integration.model.Objednavka;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import org.apache.camel.Handler;
 
 /**
  * Hlavni trida pro komunikaci se systemy
@@ -28,6 +29,7 @@ public class ObjednavkaService extends AbstractObjednavkaService
      * @return TRUE if everything is ok, FALSE if anything is not valid.
      * @throws InvalidObjednavkaDataFormat 
      */
+    @Handler
     public boolean isValid(Objednavka o) throws InvalidObjednavkaDataFormat{
         //check ID
         if(o.getIDobjed() != 0){
