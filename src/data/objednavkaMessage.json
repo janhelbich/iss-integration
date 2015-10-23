@@ -1,0 +1,15 @@
+{
+  "wantedItems" : [ {
+    "sku" : "abc",
+    "price" : 10,
+    "amount" : 2
+  }, {
+    "sku" : "def",
+    "price" : 10,
+    "amount" : 5
+  },  {
+    "sku" : "fedora",
+    "price" : 10,
+    "amount" : 12
+  }]
+}

@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+
+import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
 
 /**
@@ -46,7 +48,7 @@ public class LocalStockService {
      * FALSE otherwise.
      */
     @Handler
-    public boolean isInStock(Item wantedItem){
+    public boolean isInStock(@ExchangeProperty("item") Item wantedItem){
         
         if(this.localStock.containsKey(wantedItem.getSku())){
             Item localItem = this.localStock.get(wantedItem.getSku());
@@ -71,7 +73,7 @@ public class LocalStockService {
      * @throws InvalidObjednavkaDataFormat If given items are not the same.
      */
     @Handler
-    public Item selectCheaperItem(Item wantedItem, Item itemA, Item itemB) throws InvalidObjednavkaDataFormat{
+    public Item selectCheapestItem(Item wantedItem, Item itemA, Item itemB) throws InvalidObjednavkaDataFormat{
         //TODO vracim Item, nevybiram dodavatele, coz asi bude potreba
         //TODO tady si to mozna rika o porovnani rovnou i s cenou wantedItemu
         //TODO wantedItem mam zmenit na nejakou jinou tridu OurSystemDefinedItem! at se to neplete s Item-em co maji v jinejch systemech

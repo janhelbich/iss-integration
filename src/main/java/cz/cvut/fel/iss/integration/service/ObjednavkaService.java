@@ -13,7 +13,7 @@ import org.apache.camel.Handler;
  */
 @Startup
 @Singleton
-public class ObjednavkaService extends AbstractObjednavkaService
+public class ObjednavkaService
 {
     static ObjednavkaService singleton = new ObjednavkaService();
 

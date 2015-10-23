@@ -1,15 +1,20 @@
 package cz.cvut.fel.iss.integration;
 
+import cz.cvut.fel.iss.integration.model.Item;
 import cz.cvut.fel.iss.integration.model.Objednavka;
 import cz.cvut.fel.iss.integration.model.RESTResponse;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
+import cz.cvut.fel.iss.integration.service.ResponseBuilder;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
+import org.apache.camel.processor.aggregate.AggregationStrategy;
 
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Objednavka Endpoint
@@ -28,7 +33,7 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         restConfiguration()
                 .component("restlet")
-                .bindingMode(RestBindingMode.json)
+                .bindingMode(RestBindingMode.json_xml)
                 .port(8080)
 
                 .dataFormatProperty("prettyPrint", "true")
@@ -47,71 +52,153 @@ public class MyRouteBuilder extends RouteBuilder {
         //SOAP endpoint
         //
         rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
-                .post().type(Objednavka.class).outType(RESTResponse.class).to("direct:objednavka-process");
+                .post().type(Objednavka.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
 
 
         //
         //ROUTY
-        //TODO - tady dodelat logiku, workflow - podle toho se zde bude volat na jednotlive sluzby
-        // (a nebo to poslat do dalsich rout)
+        //
+
+        from("direct:obj-preprocessSOAP")
+                .unmarshal().soapjaxb().setHeader("inputFormat", simple("SOAP")).to("direct:objednavka-process");
 
 
         //Zpracovani objednavky
+        //
         from("direct:objednavka-process")
-                .setProperty("objednavka", simple("${body}"))
-//                .bean(ObjednavkaService.class, "isValid") //je validni? TODO dodelat metodu isValid(Objednavka objednavka)
                 .onException(InvalidObjednavkaDataFormat.class).handled(true)
                     .to("direct:bad-request")
                 .end()
-                .to("direct:new-objednavka")
-                .setBody(constant(null))
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201)); // OK
+                .setProperty("objednavka", body())
+                .setHeader("objednavkaIn", body()) // zaloha vstupu
+                .bean(ObjednavkaService.class, "isValid") //je validni? TODO dodelat metodu isValid(Objednavka objednavka)
+                .setBody(header("objednavkaIn"))
+                .to("direct:new-objednavka");
+
 
         //Spatna data
         from("direct:bad-request")
+                .setProperty("description", simple("${body}"))
+                //.bean(ResponseBuilder.class, "create")
                 .setBody(constant(null))
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400)); // BAD REQUEST
 
+
         //Zpracovani polozek
-        //TODO
-//        from("direct:new-objednavka")
-//                .bean(ObjednavkaService.class, "processObjednavka")
-//                .transacted()
-//                .split()...
-//                ...
-//                .inOut("direct:item-process")
-//                .onException(Exception.class)
-//                .end();
+        //
+        from("direct:new-objednavka")
+                //.transacted()
+                .split(simple("${body.wantedItems}").resultType(Item.class), new AggregationStrategy() {
+                    @Override
+                    public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
+                        List<Item> list = null;
+                        Item newItem = newExchange.getIn().getBody(Item.class);
+                        if (oldExchange == null) {
+                            list = new ArrayList<>();
+                            list.add(newItem);
+                            newExchange.getIn().setBody(list);
+                            return newExchange;
+                        }
+                        list = oldExchange.getIn().getBody(ArrayList.class);
+                        list.add(newItem);
+                        return oldExchange;
+                    }
+                }).to("direct:item-process")
+                //.bean(ObjednavkaService.class,"isVIP") //TODO dodelat metodu boolean isVIP(Objednavka obj);
+                .choice()
+                    .when(simple("${body} == true and ${header:VIP} == true")).log("VIP objednavka obdrzena")
+                            .to("direct:accounting-insertion")
+                    .when(simple("${body} == false")).log("Standardni objednavka obdrzena")
+                            .to("direct:accounting-insertion")
+                    .otherwise().log("NonVIP customer VIP order attempt")
+                .end()
+                .log(String.valueOf(simple("${body}")))
+                .setBody(constant(null));
+
 
         //Zpracovani Itemu
         //TODO
-//        from("direct:item-process")
-//                .transacted()
-//                .inOut("A MQ NEBO ADAPTER SUPPLIER A")
-//                .setProperty("supplierAPrice", simple("${body}")).setBody(constant(null))
-//                .inOut("A MQ NEBO ADAPTER SUPPLIER B")
-//                .setProperty("supplierBPrice", simple("${body}")).setBody(constant(null))
+//        from("direct:item-process").setHeader("ABC", simple("DEF")).log("je to tu!")
+//                .setProperty("item",simple("${body}"))
+//                .setHeader("item",simple("${body}"))
+//                .bean(LocalStockService.class, "isInStock")
 //                .choice()
-//                    .when(header("customerStatus").isEqualTo(simple("VIP"))).bean(ObjednavkaService.class, "compareAndReturnLowestPrice")
-//                .end()
-//                .onException(Exception.class)
+//                    .when(simple("${body.stock} == LOCAL"))
+//                    .otherwise().to("direct:item-suppliers-availability")
 //                .end();
 
 
+//        from("direct:item-local-availability")
+//                .transacted()
+//                .bean(ObjednavkaService.class,"isAvailableLocal");
+
+//        from("direct:item-suppliers-availability")
+//                .setHeader("localItem", simple("${body}"))
+//                //.transacted()
+//
+//                //Dotazovani dodavatelu
+//                .inOut("activemq:supplierA:available") //TODO volani supplierA
+//                .setProperty("supplierAItem", simple("${body}"))
+//                .setBody(constant(null))
+//                .inOut("activemq:supplierB:available") //TODO volani supplierB
+//                .setProperty("supplierBItem", simple("${body}"))
+//                .setBody(constant(null))
+//
+//                //Vyber nejlevnejsi ceny
+//                .bean(ObjednavkaService.class, "selectCheaperItem")
+//                .setProperty("rightItem", simple("${body}"))
+//                //Porovnani s lokalni cenou
+//                .bean(LocalStockService.class, "isPriceHigherThanLocal")
+//                .choice()
+//                    .when(simple("${body} == true and ${header:VIP} == true")).setBody(simple("${property:rightItem}"))
+//                    .otherwise().setBody(constant(null))
+//                .end();
 
 
+        //
+        //Vystaveni faktury v ucetnictvi
+        //
+        from("direct:accounting-insertion").log("Accounting insertion...");
+//            .to(ExchangePattern.InOut, "https://localhost:8443/accounting/rest/accounting/invoice/issue") //TODO POST method
+//            .choice()
+//                .when(simple("${body.status} == INVALID and ${body.invoiceId} == -1")) //TODO routovat nekam chybu
+//                .otherwise().log("Fakutra vlozena")
+//        .end();
+
+
+        //
+        //Expedice, export zbozi
+        //
+//        from("direct:expedition")
+//                //.transacted()
+//
+//                //.split() //rozsekat na itemy a odecitat ze skladu
+//
+//                .choice()
+//                    .when(header("VIP"))
+//                .end()
+//                .log();
+
+        //
+        //Odpoved
+        //
+//        from("direct:createResponse")
+//                .bean(ResponseBuilder.class, "generateNewResponse")
+//                .setProperty("outputFormat", simple("${header:inputFormat}"))
+//                .bean(ResponseBuilder.class, "getResponse")
+//                .log("Response generated" + String.valueOf(simple("${property:outputFormat}")));
 
 
 
         // here is a sample which processes the input files
         // (leaving them in place - see the 'noop' flag)
         // then performs content based routing on the message using XPath
-        from("file:src/data?noop=true")
-            .choice()
-                .when(xpath("/person/city = 'London'"))
-                    .to("file:target/messages/uk")
-                .otherwise()
-                    .to("file:target/messages/others");
+//        from("file:src/data?noop=true")
+//            .choice()
+//                .when(xpath("/person/city = 'London'"))
+//                    .to("file:target/messages/uk")
+//                .otherwise()
+//                    .to("file:target/messages/others");
     }
 
 }
