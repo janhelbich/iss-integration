@@ -6,7 +6,7 @@
 
 package cz.cvut.fel.iss.integration.service;
 
-import cz.cvut.fel.iss.integration.model.Item;
+import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -25,13 +25,13 @@ import org.apache.camel.Handler;
 @Singleton
 public class LocalStockService {
     static LocalStockService singleton = new LocalStockService();
-    private static Map<String, Item> localStock;
+    private static Map<String, ItemBO> localStock;
 
     public LocalStockService() {
         this.localStock = new HashMap<>();
-        this.localStock.put("fedora", new Item(50, 10));
-        this.localStock.put("rhel", new Item(30, 10));
-        this.localStock.put("ubuntu", new Item(15, 10));
+        this.localStock.put("fedora", new ItemBO(50, 10));
+        this.localStock.put("rhel", new ItemBO(30, 10));
+        this.localStock.put("ubuntu", new ItemBO(15, 10));
     }
     
     
@@ -48,10 +48,10 @@ public class LocalStockService {
      * FALSE otherwise.
      */
     @Handler
-    public boolean isInStock(@ExchangeProperty("item") Item wantedItem){
+    public boolean isInStock(@ExchangeProperty("item") ItemBO wantedItem){
         
         if(this.localStock.containsKey(wantedItem.getSku())){
-            Item localItem = this.localStock.get(wantedItem.getSku());
+            ItemBO localItem = this.localStock.get(wantedItem.getSku());
             
             //return TRUE if localStock contains atleast wanted amount of items.
             return (localItem.getAmount() >= wantedItem.getAmount());
@@ -73,7 +73,7 @@ public class LocalStockService {
      * @throws InvalidObjednavkaDataFormat If given items are not the same.
      */
     @Handler
-    public Item selectCheapestItem(Item wantedItem, Item itemA, Item itemB) throws InvalidObjednavkaDataFormat{
+    public ItemBO selectCheapestItem(ItemBO wantedItem, ItemBO itemA, ItemBO itemB) throws InvalidObjednavkaDataFormat{
         //TODO vracim Item, nevybiram dodavatele, coz asi bude potreba
         //TODO tady si to mozna rika o porovnani rovnou i s cenou wantedItemu
         //TODO wantedItem mam zmenit na nejakou jinou tridu OurSystemDefinedItem! at se to neplete s Item-em co maji v jinejch systemech
@@ -105,7 +105,7 @@ public class LocalStockService {
      * @return True if price of given item is higher. False otherwise.
      */
     @Handler
-    public boolean isPriceHigherThanLocal(Item supplierItem ){
+    public boolean isPriceHigherThanLocal(ItemBO supplierItem ){
         BigDecimal priceInLocalStock = this.getItem(supplierItem.getSku()).getPrice();
         return (supplierItem.getPrice().compareTo(priceInLocalStock) > 0);
     }
@@ -116,9 +116,9 @@ public class LocalStockService {
      * @return True if it was removed, False if there is not enough pieces.
      */
     @Handler
-    public boolean removeNumberOfItemsFromStock(Item processedItem){
+    public boolean removeNumberOfItemsFromStock(ItemBO processedItem){
         //TODO do it in some transaction
-        Item itemInStock = getItem(processedItem.getSku());
+        ItemBO itemInStock = getItem(processedItem.getSku());
         if(itemInStock.getAmount() >= processedItem.getAmount()){
             itemInStock.setAmount( itemInStock.getAmount() - processedItem.getAmount());
             
@@ -136,7 +136,7 @@ public class LocalStockService {
      * @param itemId item's identifier
      * @return wanted Item or null
      */
-    private Item getItem(String itemId){
+    private ItemBO getItem(String itemId){
         return this.localStock.get(itemId);
     }
 }

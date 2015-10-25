@@ -1,7 +1,7 @@
 package cz.cvut.fel.iss.integration;
 
-import cz.cvut.fel.iss.integration.model.Item;
-import cz.cvut.fel.iss.integration.model.Objednavka;
+import cz.cvut.fel.iss.integration.model.bo.ItemBO;
+import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.RESTResponse;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
@@ -45,14 +45,14 @@ public class MyRouteBuilder extends RouteBuilder {
         //JSON endpoint
         //
         rest("/ordersJSON").consumes("application/json").produces("application/json")
-                .post().type(Objednavka.class).outType(RESTResponse.class).to("direct:objednavka-process");
+                .post().type(ObjednavkaBO.class).outType(RESTResponse.class).to("direct:objednavka-process");
 
 
         //
         //SOAP endpoint
         //
         rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
-                .post().type(Objednavka.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
+                .post().type(ObjednavkaBO.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
 
 
         //
@@ -88,11 +88,11 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         from("direct:new-objednavka")
                 //.transacted()
-                .split(simple("${body.wantedItems}").resultType(Item.class), new AggregationStrategy() {
+                .split(simple("${body.wantedItems}").resultType(ItemBO.class), new AggregationStrategy() {
                     @Override
                     public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
-                        List<Item> list = null;
-                        Item newItem = newExchange.getIn().getBody(Item.class);
+                        List<ItemBO> list = null;
+                        ItemBO newItem = newExchange.getIn().getBody(ItemBO.class);
                         if (oldExchange == null) {
                             list = new ArrayList<>();
                             list.add(newItem);

@@ -1,7 +1,7 @@
 package cz.cvut.fel.iss.integration.service;
 
-import cz.cvut.fel.iss.integration.model.Item;
-import cz.cvut.fel.iss.integration.model.Objednavka;
+import cz.cvut.fel.iss.integration.model.bo.ItemBO;
+import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -30,7 +30,7 @@ public class ObjednavkaService
      * @throws InvalidObjednavkaDataFormat 
      */
     @Handler
-    public boolean isValid(Objednavka o) throws InvalidObjednavkaDataFormat{
+    public boolean isValid(ObjednavkaBO o) throws InvalidObjednavkaDataFormat{
         //check ID
         if(o.getIDobjed() != 0){
             throw new InvalidObjednavkaDataFormat();
@@ -40,7 +40,7 @@ public class ObjednavkaService
             //TODO HonzaŠ zatim chyta vyjimky
             throw new InvalidObjednavkaDataFormat();
         } else {
-            for(Item item: o.getWantedItems()){
+            for(ItemBO item: o.getWantedItems()){
                 if(!item.isValid()){
                     throw new InvalidObjednavkaDataFormat();
                 }

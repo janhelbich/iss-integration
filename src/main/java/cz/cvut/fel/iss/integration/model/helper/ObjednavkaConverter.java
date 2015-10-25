@@ -1,6 +1,6 @@
 package cz.cvut.fel.iss.integration.model.helper;
 
-import cz.cvut.fel.iss.integration.model.Objednavka;
+import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaItemDTO;
 
@@ -9,12 +9,12 @@ import cz.cvut.fel.iss.integration.model.dto.ObjednavkaItemDTO;
  */
 public class ObjednavkaConverter
 {
-    public Objednavka getObjednavka(ObjednavkaDTO dto)
+    public ObjednavkaBO getObjednavka(ObjednavkaDTO dto)
     {
         //TODO
         return null;
     }
-    public ObjednavkaDTO getObjednavkaDTO(Objednavka obj)
+    public ObjednavkaDTO getObjednavkaDTO(ObjednavkaBO obj)
     {
         //TODO
         return null;

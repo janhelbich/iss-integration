@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package cz.cvut.fel.iss.integration.model;
+package cz.cvut.fel.iss.integration.model.bo;
 
 /**
  * copy of https://github.com/qa/course-sys-int-systems-exam/blob/master/common/src/main/java/com/redhat/brq/integration/examination/common/Item.java
@@ -17,7 +17,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class Item {
+public class ItemBO {
     @Id @Column(name = "id")
     private String sku; // stock-keeping unit. google translation
 
@@ -27,18 +27,18 @@ public class Item {
     @Column(name = "count")
     private int amount;
 
-    public Item() {
+    public ItemBO() {
             super();
     }
 
-    public Item(final String sku, final int price, final int amount) {
+    public ItemBO(final String sku, final int price, final int amount) {
             super();
             this.sku = sku;
             this.price = new BigDecimal(price);
             this.amount = amount;
     }
 
-    public Item(final int price, final int amount) {
+    public ItemBO(final int price, final int amount) {
             this(null, price, amount);
     }
 

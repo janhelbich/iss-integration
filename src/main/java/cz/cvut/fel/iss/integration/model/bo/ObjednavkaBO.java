@@ -1,4 +1,4 @@
-package cz.cvut.fel.iss.integration.model;
+package cz.cvut.fel.iss.integration.model.bo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,14 +7,14 @@ import java.util.List;
  * Instance objednavky
  * @author Jan Srogl
  */
-public class Objednavka
+public class ObjednavkaBO
 {
     
     private int idObjednavka;
-    private List<Item> wantedItems;
+    private List<ItemBO> wantedItems;
     //private int customer; should it be defined here?
     
-    public Objednavka(){
+    public ObjednavkaBO(){
         this.wantedItems = new ArrayList<>();
     }
 
@@ -26,11 +26,11 @@ public class Objednavka
         this.idObjednavka = IDobjed;
     }
 
-    public List<Item> getWantedItems() {
+    public List<ItemBO> getWantedItems() {
         return wantedItems;
     }
 
-    public void setWantedItems(List<Item> wantedItems) {
+    public void setWantedItems(List<ItemBO> wantedItems) {
         this.wantedItems = wantedItems;
     }
     
