@@ -9,7 +9,11 @@ import java.util.List;
 public class ObjednavkaDTO
 {
     //TODO
-    private int idObjednavka;
     private List<ObjednavkaItemDTO> wantedItems;
+
+    public List<ObjednavkaItemDTO> getWantedItems() {
+        return wantedItems;
+    }
+    
     
 }

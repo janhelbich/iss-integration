@@ -27,19 +27,23 @@ public class ItemBO {
     @Column(name = "count")
     private int amount;
 
+    private ItemTypes itemType;
+    
     public ItemBO() {
-            super();
     }
 
-    public ItemBO(final String sku, final int price, final int amount) {
-            super();
+    public ItemBO(final String sku, final int price, final int amount, ItemTypes type) {
             this.sku = sku;
             this.price = new BigDecimal(price);
             this.amount = amount;
+            this.itemType = type;
     }
 
-    public ItemBO(final int price, final int amount) {
-            this(null, price, amount);
+    public ItemBO(final String sku, final int amount) {
+            this.sku = sku;
+            this.amount = amount;
+            this.price = null;
+            this.itemType = null;
     }
 
     /**
@@ -66,6 +70,15 @@ public class ItemBO {
             this.amount = amount;
     }
 
+    /**
+     * Adds given amount to this amount.
+     * @param amount 
+     */
+    public void addAmount(int amount){
+        this.amount +=amount;
+    }
+    
+    
     public String getSku() {
             return sku;
     }
@@ -79,6 +92,16 @@ public class ItemBO {
             return "Item [sku=" + sku + ", price=" + price + ", amount=" + amount
                             + "]";
     }
+
+    public ItemTypes getItemType() {
+        return itemType;
+    }
+
+    public void setItemType(ItemTypes itemType) {
+        this.itemType = itemType;
+    }
         
+    
+    
 }
 

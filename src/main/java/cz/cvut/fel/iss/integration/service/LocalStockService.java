@@ -7,6 +7,7 @@
 package cz.cvut.fel.iss.integration.service;
 
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
+import cz.cvut.fel.iss.integration.model.bo.ItemTypes;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -28,10 +29,10 @@ public class LocalStockService {
     private static Map<String, ItemBO> localStock;
 
     public LocalStockService() {
-        this.localStock = new HashMap<>();
-        this.localStock.put("fedora", new ItemBO(50, 10));
-        this.localStock.put("rhel", new ItemBO(30, 10));
-        this.localStock.put("ubuntu", new ItemBO(15, 10));
+        localStock = new HashMap<>();
+        localStock.put("fedora", new ItemBO("fedora",50, 10, ItemTypes.LOCAL_STOCK_INFO));
+        localStock.put("rhel", new ItemBO("rhel",30, 10, ItemTypes.LOCAL_STOCK_INFO));
+        localStock.put("ubuntu", new ItemBO("ubuntu",15, 10, ItemTypes.LOCAL_STOCK_INFO));
     }
     
     
