@@ -10,6 +10,6 @@ public class ObjednavkaDTO
 {
     //TODO
     private int idObjednavka;
-    private List<ItemBO> wantedItems;
+    private List<ObjednavkaItemDTO> wantedItems;
     
 }
