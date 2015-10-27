@@ -104,28 +104,34 @@ public class MyRouteBuilder extends RouteBuilder {
                         list.add(newItem);
                         return oldExchange;
                     }
-                }).to("direct:item-process")
-                //.bean(ObjednavkaService.class,"isVIP") //TODO dodelat metodu boolean isVIP(Objednavka obj);
+                })
+                    .log(">>Trying to process>>" + String.valueOf(simple("${body}")))
+                    .inOut("direct:item-process")
+                .end()
+                .log(">>SPLITTED >>" + String.valueOf(simple("${body}")))
+                .setHeader("orderItems", simple("${body}"))
+                //.bean(UserService.class, "checkForVIPStatus") //TODO dodelat metodu boolean checkForVIPStatus(Objednavka obj);
                 .choice()
                     .when(simple("${body} == true and ${header:VIP} == true")).log("VIP objednavka obdrzena")
-                            .to("direct:accounting-insertion")
+                        .to("direct:accounting-insertion")
                     .when(simple("${body} == false")).log("Standardni objednavka obdrzena")
-                            .to("direct:accounting-insertion")
+                        .to("direct:accounting-insertion")
                     .otherwise().log("NonVIP customer VIP order attempt")
                 .end()
-                .log(String.valueOf(simple("${body}")))
-                .setBody(constant(null));
+                .log(String.valueOf(simple("${body}"))); // temp
+                //.setBody(constant(null));
 
 
         //Zpracovani Itemu
         //TODO
-        from("direct:item-process").log("Item Processing:" + String.valueOf(simple("${body}")))
-                .setProperty("item",simple("${body}"))
-                .setHeader("item",simple("${body}"))
+        from("direct:item-process").log(">>Item Processing>>" + String.valueOf(simple("${body}")))
+                .setProperty("item", simple("${body}"))
+                .setHeader("POM",simple("${body}"))
                 .bean(LocalStockService.class, "isInStock")
+                .setBody(header("POM")).removeHeader("POM")
                 .choice()
-                    .when(simple("${body} == true")).log("Item available locally") //.when(simple("${body.stock} == LOCAL"))
-                    .otherwise().to("direct:item-suppliers-availability")
+                    .when(simple("${body} == true")).log(">>Item available locally") //.when(simple("${body.stock} == LOCAL"))
+                    .otherwise().log(">>Need to look to suppliers")//.to("direct:item-suppliers-availability")
                 .end();
 
 
@@ -189,17 +195,6 @@ public class MyRouteBuilder extends RouteBuilder {
 //                .bean(ResponseBuilder.class, "getResponse")
 //                .log("Response generated" + String.valueOf(simple("${property:outputFormat}")));
 
-
-
-        // here is a sample which processes the input files
-        // (leaving them in place - see the 'noop' flag)
-        // then performs content based routing on the message using XPath
-//        from("file:src/data?noop=true")
-//            .choice()
-//                .when(xpath("/person/city = 'London'"))
-//                    .to("file:target/messages/uk")
-//                .otherwise()
-//                    .to("file:target/messages/others");
     }
 
 }
