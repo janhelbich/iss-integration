@@ -72,7 +72,7 @@ public class MyRouteBuilder extends RouteBuilder {
                 .end()
                 .setProperty("objednavka", body())
                 .setHeader("objednavkaIn", body()) // zaloha vstupu
-                .bean(ObjednavkaService.class, "isValid") //je validni? TODO dodelat metodu isValid(Objednavka objednavka)
+                .bean(ObjednavkaService.class, "isValid") //je vstup validni?
                 .bean(ObjednavkaService.class, "create") //prevod na BO
                 .to("direct:new-objednavka");
 
