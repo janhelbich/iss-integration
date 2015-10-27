@@ -84,6 +84,10 @@ public class LocalStockService {
             throw new InvalidObjednavkaDataFormat();
         }
         
+        //it is info about state on supplier's stock
+        itemA.setItemType(ItemTypes.SUPPLIER_A_INFO);
+        itemB.setItemType(ItemTypes.SUPPLIER_B_INFO);
+        
         int wantedAmount = wantedItem.getAmount();
         if(itemA.getAmount() >= wantedAmount && itemB.getAmount() >= wantedAmount){
             if(itemA.getPrice().compareTo(itemB.getPrice()) <= 0){
@@ -93,7 +97,7 @@ public class LocalStockService {
             }
         } else if(itemA.getAmount() >= wantedAmount){
             return itemA;
-        } else if(itemA.getAmount() >= wantedAmount){
+        } else if(itemB.getAmount() >= wantedAmount){
             return itemB;
         }
         //both of suppliers do not have wanted amount
