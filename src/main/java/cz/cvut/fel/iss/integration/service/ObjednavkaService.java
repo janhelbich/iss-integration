@@ -34,7 +34,7 @@ public class ObjednavkaService
      * @throws InvalidObjednavkaDataFormat 
      */
     @Handler
-    public boolean isValid(ObjednavkaDTO o) throws InvalidObjednavkaDataFormat{
+    public void isValid(ObjednavkaDTO o) throws InvalidObjednavkaDataFormat{
         //check products
         if(o.getWantedItems() == null || o.getWantedItems().isEmpty()){
             //TODO HonzaŠ zatim chyta vyjimky
@@ -46,8 +46,7 @@ public class ObjednavkaService
                 }
             }
         }
-        
-        return true;
+
     }
     
     /**

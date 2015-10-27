@@ -1,6 +1,6 @@
 package cz.cvut.fel.iss.integration;
 
-import cz.cvut.fel.iss.integration.model.RESTResponse;
+import cz.cvut.fel.iss.integration.model.bo.RESTResponse;
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
@@ -67,12 +67,13 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         from("direct:objednavka-process")
                 .onException(InvalidObjednavkaDataFormat.class).handled(true)
+                    .log("Invalid INPUT format detected!")
                     .to("direct:bad-request")
                 .end()
                 .setProperty("objednavka", body())
                 .setHeader("objednavkaIn", body()) // zaloha vstupu
                 .bean(ObjednavkaService.class, "isValid") //je validni? TODO dodelat metodu isValid(Objednavka objednavka)
-                .setBody(header("objednavkaIn"))
+                .bean(ObjednavkaService.class, "create") //prevod na BO
                 .to("direct:new-objednavka");
 
 
