@@ -41,7 +41,7 @@ public class ObjednavkaService
             throw new InvalidObjednavkaDataFormat();
         } else {
             for(ObjednavkaItemDTO item: o.getWantedItems()){
-                if(!item.isValid()){
+                if(!item.validate()){
                     throw new InvalidObjednavkaDataFormat();
                 }
             }

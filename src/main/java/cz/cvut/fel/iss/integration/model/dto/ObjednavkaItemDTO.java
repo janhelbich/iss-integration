@@ -22,7 +22,7 @@ public class ObjednavkaItemDTO
      * Checks if Sku != null and ordered amount is bigger than zero.
      * @return TRUE if Sku != null and amount is bigger than zero. FALSE otherwise.
      */
-    public boolean isValid(){
+    public boolean validate(){
         return (this.sku != null && this.amount > 0);
     }
 }

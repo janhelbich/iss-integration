@@ -50,7 +50,7 @@ public class ItemBO {
      * Checks if Sku != null and price is bigger than zero and amount is bigger than zero.
      * @return TRUE if Sku != null and price is bigger than zero and amount is bigger than zero. FALSE otherwise.
      */
-    public boolean isValid(){
+    public boolean validate(){
         return (this.sku != null 
                 && this.price.compareTo(BigDecimal.ZERO) > 0
                 && this.amount > 0);

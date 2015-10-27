@@ -1,11 +1,11 @@
 package cz.cvut.fel.iss.integration;
 
-import cz.cvut.fel.iss.integration.model.bo.ItemBO;
-import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.RESTResponse;
+import cz.cvut.fel.iss.integration.model.bo.ItemBO;
+import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
+import cz.cvut.fel.iss.integration.service.LocalStockService;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
-import cz.cvut.fel.iss.integration.service.ResponseBuilder;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
@@ -45,14 +45,14 @@ public class MyRouteBuilder extends RouteBuilder {
         //JSON endpoint
         //
         rest("/ordersJSON").consumes("application/json").produces("application/json")
-                .post().type(ObjednavkaBO.class).outType(RESTResponse.class).to("direct:objednavka-process");
+                .post().type(ObjednavkaDTO.class).outType(RESTResponse.class).to("direct:objednavka-process");
 
 
         //
         //SOAP endpoint
         //
         rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
-                .post().type(ObjednavkaBO.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
+                .post().type(ObjednavkaDTO.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
 
 
         //
@@ -118,21 +118,21 @@ public class MyRouteBuilder extends RouteBuilder {
 
         //Zpracovani Itemu
         //TODO
-//        from("direct:item-process").setHeader("ABC", simple("DEF")).log("je to tu!")
-//                .setProperty("item",simple("${body}"))
-//                .setHeader("item",simple("${body}"))
-//                .bean(LocalStockService.class, "isInStock")
-//                .choice()
-//                    .when(simple("${body.stock} == LOCAL"))
-//                    .otherwise().to("direct:item-suppliers-availability")
-//                .end();
+        from("direct:item-process").log("Item Processing:" + String.valueOf(simple("${body}")))
+                .setProperty("item",simple("${body}"))
+                .setHeader("item",simple("${body}"))
+                .bean(LocalStockService.class, "isInStock")
+                .choice()
+                    .when(simple("${body} == true")).log("Item available locally") //.when(simple("${body.stock} == LOCAL"))
+                    .otherwise().to("direct:item-suppliers-availability")
+                .end();
 
 
-//        from("direct:item-local-availability")
+        from("direct:item-local-availability").log("checking local availability");
 //                .transacted()
 //                .bean(ObjednavkaService.class,"isAvailableLocal");
 
-//        from("direct:item-suppliers-availability")
+        from("direct:item-suppliers-availability").log("checking Suppliers availability");
 //                .setHeader("localItem", simple("${body}"))
 //                //.transacted()
 //
