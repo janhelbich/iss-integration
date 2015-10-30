@@ -1,11 +1,12 @@
 package cz.cvut.fel.iss.integration;
 
-import cz.cvut.fel.iss.integration.model.bo.RESTResponse;
+import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import cz.cvut.fel.iss.integration.service.LocalStockService;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
+import cz.cvut.fel.iss.integration.service.ResponseBuilder;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
@@ -45,14 +46,14 @@ public class MyRouteBuilder extends RouteBuilder {
         //JSON endpoint
         //
         rest("/ordersJSON").consumes("application/json").produces("application/json")
-                .post().type(ObjednavkaDTO.class).outType(RESTResponse.class).to("direct:objednavka-process");
+                .post().type(ObjednavkaDTO.class).outType(OutputResponse.class).to("direct:objednavka-process");
 
 
         //
         //SOAP endpoint
         //
         rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
-                .post().type(ObjednavkaDTO.class).outType(RESTResponse.class).to("direct:obj-preprocessSOAP");
+                .post().type(ObjednavkaDTO.class).outType(OutputResponse.class).to("direct:obj-preprocessSOAP");
 
 
         //
@@ -176,7 +177,7 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         //Expedice, export zbozi
         //
-//        from("direct:expedition")
+        from("direct:expedition").log("Expedition attempt");
 //                //.transacted()
 //
 //                //.split() //rozsekat na itemy a odecitat ze skladu
@@ -189,11 +190,13 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         //Odpoved
         //
-//        from("direct:createResponse")
+        from("direct:createResponse").log("Creating response");
 //                .bean(ResponseBuilder.class, "generateNewResponse")
 //                .setProperty("outputFormat", simple("${header:inputFormat}"))
-//                .bean(ResponseBuilder.class, "getResponse")
-//                .log("Response generated" + String.valueOf(simple("${property:outputFormat}")));
+//                .log("Response generated" + String.valueOf(simple("${property:outputFormat}")))
+//                .removeHeader("*")
+//                .setBody(constant(null))
+//                .bean(ResponseBuilder.class, "getResponse");
 
     }
 

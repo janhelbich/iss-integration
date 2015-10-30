@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Created by Jan Srogl on 16.10.15.
  */
-public class RESTResponse
+public class OutputResponse
 {
     String status;
     String response;
