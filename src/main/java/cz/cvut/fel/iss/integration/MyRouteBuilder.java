@@ -1,14 +1,16 @@
 package cz.cvut.fel.iss.integration;
 
-import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
+import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
+import cz.cvut.fel.iss.integration.model.helper.ResponseFormatRepository;
 import cz.cvut.fel.iss.integration.service.LocalStockService;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
 import cz.cvut.fel.iss.integration.service.ResponseBuilder;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.apache.camel.processor.aggregate.AggregationStrategy;
 
@@ -51,7 +53,7 @@ public class MyRouteBuilder extends RouteBuilder {
 
         //
         //SOAP endpoint
-        //
+        //TODO udelat pres Cxf
         rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
                 .post().type(ObjednavkaDTO.class).outType(OutputResponse.class).to("direct:obj-preprocessSOAP");
 
@@ -70,6 +72,7 @@ public class MyRouteBuilder extends RouteBuilder {
                 .onException(InvalidObjednavkaDataFormat.class).handled(true)
                     .log("Invalid INPUT format detected!")
                     .to("direct:bad-request")
+                    .end()
                 .end()
                 .setProperty("objednavka", body())
                 .setHeader("objednavkaIn", body()) // zaloha vstupu
@@ -80,10 +83,11 @@ public class MyRouteBuilder extends RouteBuilder {
 
         //Spatna data
         from("direct:bad-request")
-                .setProperty("description", simple("${body}"))
-                //.bean(ResponseBuilder.class, "create")
+                .setHeader("description", simple("${body}"))
+                .setHeader("status", simple("BAD_REQUEST"))
                 .setBody(constant(null))
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400)); // BAD REQUEST
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400)) // BAD REQUEST
+                .to("direct:createResponse");
 
 
         //Zpracovani polozek
@@ -114,13 +118,17 @@ public class MyRouteBuilder extends RouteBuilder {
                 //.bean(UserService.class, "checkForVIPStatus") //TODO dodelat metodu boolean checkForVIPStatus(Objednavka obj);
                 .choice()
                     .when(simple("${body} == true and ${header:VIP} == true")).log("VIP objednavka obdrzena")
-                        .to("direct:accounting-insertion")
+                        .to("direct:accounting-insertion").endChoice()
                     .when(simple("${body} == false")).log("Standardni objednavka obdrzena")
-                        .to("direct:accounting-insertion")
-                    .otherwise().log("NonVIP customer VIP order attempt")
+                        .to("direct:accounting-insertion").endChoice()
+                    .otherwise().log("NonVIP customer VIP order attempt").endChoice()
                 .end()
-                .log(String.valueOf(simple("${body}"))); // temp
-                //.setBody(constant(null));
+                .log(String.valueOf(simple("${body}")))
+
+                .setBody(constant(null))
+                .setHeader("status", simple("OK"))
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201)) // CREATED
+                .to("direct:createResponse");
 
 
         //Zpracovani Itemu
@@ -190,14 +198,16 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         //Odpoved
         //
-        from("direct:createResponse").log("Creating response");
-//                .bean(ResponseBuilder.class, "generateNewResponse")
-//                .setProperty("outputFormat", simple("${header:inputFormat}"))
-//                .log("Response generated" + String.valueOf(simple("${property:outputFormat}")))
-//                .removeHeader("*")
-//                .setBody(constant(null))
-//                .bean(ResponseBuilder.class, "getResponse");
-
+        from("direct:createResponse").log("Generating response")
+                .setHeader("objednavka", simple("${body}"))
+                .setBody(constant(null))
+                .bean(ResponseBuilder.class, "generateNewResponse")
+                .choice()
+                    .when(simple("${header:inputFormat} == 'SOAP' ")).marshal().soapjaxb().endChoice()
+                    .otherwise().marshal().json(JsonLibrary.Jackson,true).endChoice()
+                .end()
+                .removeHeader("*")
+                .log("Response generated in" + String.valueOf(simple("${property:outputFormat}")));
     }
 
 }
