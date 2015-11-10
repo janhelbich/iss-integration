@@ -67,6 +67,7 @@ public class LocalStockService {
      * Selects cheaper supplier which have wanted amount of Item.
      * It also checks if wantedItem is the same item as items from 
      * supplierA and supplierB
+     * Sets vipStatus of item to TRUE, if supplier's price is higher than on local stock.
      * @param wantedItem Wanted Item with defined wanted amount
      * @param itemA item state at supplierA, price and amount 
      * @param itemB item state at supplierB, price and amount
@@ -75,9 +76,6 @@ public class LocalStockService {
      */
     @Handler
     public ItemBO selectCheapestItem(ItemBO wantedItem, ItemBO itemA, ItemBO itemB) throws InvalidObjednavkaDataFormat{
-        //TODO vracim Item, nevybiram dodavatele, coz asi bude potreba
-        //TODO tady si to mozna rika o porovnani rovnou i s cenou wantedItemu
-        //TODO wantedItem mam zmenit na nejakou jinou tridu OurSystemDefinedItem! at se to neplete s Item-em co maji v jinejch systemech
         
         if( !wantedItem.getSku().equals(itemA.getSku()) && !itemA.getSku().equals(itemB.getSku()) ){
             //not the same items
@@ -91,14 +89,14 @@ public class LocalStockService {
         int wantedAmount = wantedItem.getAmount();
         if(itemA.getAmount() >= wantedAmount && itemB.getAmount() >= wantedAmount){
             if(itemA.getPrice().compareTo(itemB.getPrice()) <= 0){
-                return itemA;
+                return compareSupplierPriceAndLocalPrice(itemA);
             } else {
-                return itemB;
+                return compareSupplierPriceAndLocalPrice(itemB);
             }
         } else if(itemA.getAmount() >= wantedAmount){
-            return itemA;
+            return compareSupplierPriceAndLocalPrice(itemA);
         } else if(itemB.getAmount() >= wantedAmount){
-            return itemB;
+            return compareSupplierPriceAndLocalPrice(itemB);
         }
         //both of suppliers do not have wanted amount
         return null;
@@ -107,12 +105,12 @@ public class LocalStockService {
     /**
      * Checks if price of given item is higher than price in local stock.
      * @param supplierItem Selected item from supplier.
-     * @return True if price of given item is higher. False otherwise.
+     * @return given item with vipStatus variable adjusted.
      */
-    @Handler
-    public boolean isPriceHigherThanLocal(ItemBO supplierItem ){
+    private ItemBO compareSupplierPriceAndLocalPrice(ItemBO supplierItem ){
         BigDecimal priceInLocalStock = this.getItem(supplierItem.getSku()).getPrice();
-        return (supplierItem.getPrice().compareTo(priceInLocalStock) > 0);
+        supplierItem.setVipStatus(supplierItem.getPrice().compareTo(priceInLocalStock) > 0);
+        return supplierItem;
     }
     
     /**

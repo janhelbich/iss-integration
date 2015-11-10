@@ -29,6 +29,13 @@ public class ItemBO {
 
     private ItemTypes itemType;
     
+    /**
+     * TRUE - this item was marked as item with higher price than on local stock, so it is
+     * possible only for VIP customers
+     */
+    private boolean vipStatus;
+    
+    
     public ItemBO() {
     }
 
@@ -37,6 +44,7 @@ public class ItemBO {
             this.price = new BigDecimal(price);
             this.amount = amount;
             this.itemType = type;
+            this.vipStatus = false;
     }
 
     public ItemBO(final String sku, final int amount) {
@@ -44,6 +52,7 @@ public class ItemBO {
             this.amount = amount;
             this.price = null;
             this.itemType = null;
+            this.vipStatus = false;
     }
 
     /**
@@ -99,6 +108,24 @@ public class ItemBO {
 
     public void setItemType(ItemTypes itemType) {
         this.itemType = itemType;
+    }
+
+    /**
+     * TRUE - this item was marked as item with higher price than on local stock, so it is
+     * possible only for VIP customers
+     * FALSE - default value or nonVIP
+     * @return 
+     */
+    public boolean getVipStatus() {
+        return vipStatus;
+    }
+
+    /**
+     * Set to TRUE if the price is higher than on local stock
+     * @param vipStatus 
+     */
+    public void setVipStatus(boolean vipStatus) {
+        this.vipStatus = vipStatus;
     }
         
     
