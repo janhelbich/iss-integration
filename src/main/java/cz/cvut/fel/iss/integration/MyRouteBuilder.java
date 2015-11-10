@@ -177,7 +177,7 @@ public class MyRouteBuilder extends RouteBuilder {
                 .bean(ObjednavkaService.class, "selectCheapestItem")
                 .setProperty("rightItem", simple("${body}"))
 
-
+                //Kontrola statutu zbozi a pripadny zapis do hlavicek
                 .choice()
                     .when(simple("${body}.vipStatus == true")).setHeader("VIP",constant(true)).endChoice()
                 .end();
