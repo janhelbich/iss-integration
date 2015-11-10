@@ -4,7 +4,6 @@ import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
-import cz.cvut.fel.iss.integration.model.helper.ResponseFormatRepository;
 import cz.cvut.fel.iss.integration.service.LocalStockService;
 import cz.cvut.fel.iss.integration.service.ObjednavkaService;
 import cz.cvut.fel.iss.integration.service.ResponseBuilder;
@@ -25,6 +24,12 @@ import java.util.List;
 @Startup
 @Singleton
 public class MyRouteBuilder extends RouteBuilder {
+
+    final static String LOCAL_STOCK_URL = "jdbc:h2:tcp://localhost/~/exam"; //creds sa/sa
+    final static String SUPPLIER_A_URL = "http://localhost:8080/supplier-a/SupplierAService?wsdl";
+    final static String SUPPLIER_B_URL = "http://localhost:8080/supplier-b/SupplierBService?wsdl";
+    final static String ACCOUNTING_URL = "https://localhost:8443/accounting/rest/accounting/invoice/issue";
+
 
     /**
      * Let's configure the Camel routing rules using Java code...
@@ -144,31 +149,38 @@ public class MyRouteBuilder extends RouteBuilder {
                 .end();
 
 
-        from("direct:item-local-availability").log("checking local availability");
+        from("direct:item-local-availability").log("checking local availability")
 //                .transacted()
-//                .bean(ObjednavkaService.class,"isAvailableLocal");
-
-        from("direct:item-suppliers-availability").log("checking Suppliers availability");
-//                .setHeader("localItem", simple("${body}"))
-//                //.transacted()
-//
-//                //Dotazovani dodavatelu
-//                .inOut("activemq:supplierA:available") //TODO volani supplierA
-//                .setProperty("supplierAItem", simple("${body}"))
-//                .setBody(constant(null))
-//                .inOut("activemq:supplierB:available") //TODO volani supplierB
-//                .setProperty("supplierBItem", simple("${body}"))
-//                .setBody(constant(null))
-//
-//                //Vyber nejlevnejsi ceny
-//                .bean(ObjednavkaService.class, "selectCheaperItem")
-//                .setProperty("rightItem", simple("${body}"))
-//                //Porovnani s lokalni cenou
-//                .bean(LocalStockService.class, "isPriceHigherThanLocal")
+//                .inOut(LOCAL_STOCK_URL)
+//                ...
 //                .choice()
-//                    .when(simple("${body} == true and ${header:VIP} == true")).setBody(simple("${property:rightItem}"))
-//                    .otherwise().setBody(constant(null))
+//                    .when( /* TODO neni na sklade */).to("direct:item-suppliers-availability").endChoice()
 //                .end();
+
+        from("direct:item-suppliers-availability").log("checking Suppliers availability")
+                .setHeader("localItem", simple("${body}"))
+                //.transacted()
+
+                //dotaz na Supplier-A
+                .inOut(SUPPLIER_A_URL) //TODO volani supplierA
+                .unmarshal().soapjaxb()
+                .setProperty("supplierAItem", simple("${body}"))
+                .setBody(constant(null))
+
+                //dotaz na Supplier-B
+                .inOut(SUPPLIER_B_URL) //TODO volani supplierB
+                .unmarshal().soapjaxb()
+                .setProperty("supplierBItem", simple("${body}"))
+                .setBody(constant(null))
+
+                //Vyber nejlevnejsi ceny
+                .bean(ObjednavkaService.class, "selectCheapestItem")
+                .setProperty("rightItem", simple("${body}"))
+
+
+                .choice()
+                    .when(simple("${body}.vipStatus == true")).setHeader("VIP",constant(true)).endChoice()
+                .end();
 
 
         //
