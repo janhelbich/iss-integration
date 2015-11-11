@@ -149,7 +149,7 @@ public class MyRouteBuilder extends RouteBuilder {
                 .end();
 
 
-        from("direct:item-local-availability").log("checking local availability")
+//        from("direct:item-local-availability").log("checking local availability")
 //                .transacted()
 //                .inOut(LOCAL_STOCK_URL)
 //                ...
