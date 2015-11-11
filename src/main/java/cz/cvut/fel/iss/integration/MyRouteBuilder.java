@@ -149,10 +149,10 @@ public class MyRouteBuilder extends RouteBuilder {
                 .end();
 
 
-//        from("direct:item-local-availability").log("checking local availability")
+        from("direct:item-local-availability").log("checking local availability");
 //                .transacted()
+//                .setHeader("zalohaInput",simple("${body}"))
 //                .inOut(LOCAL_STOCK_URL)
-//                ...
 //                .choice()
 //                    .when( /* TODO neni na sklade */).to("direct:item-suppliers-availability").endChoice()
 //                .end();
@@ -174,7 +174,7 @@ public class MyRouteBuilder extends RouteBuilder {
                 .setBody(constant(null))
 
                 //Vyber nejlevnejsi ceny
-                .bean(ObjednavkaService.class, "selectCheapestItem")
+                .bean(LocalStockService.class, "selectCheapestItem")
                 .setProperty("rightItem", simple("${body}"))
 
                 //Kontrola statutu zbozi a pripadny zapis do hlavicek
