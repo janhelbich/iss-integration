@@ -35,7 +35,7 @@ public class ObjednavkaBO
     }
     public String toString()
     {
-        String s = "idObjednavka: " + this.idObjednavka + " ";
+        String s = "idObjednavka: " + this.idObjednavka + ", ";
         for (ItemBO b : this.wantedItems)
         {
             s += " " + b.toString();
