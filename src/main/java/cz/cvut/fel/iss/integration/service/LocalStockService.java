@@ -131,8 +131,7 @@ public class LocalStockService {
      * @return True if it was removed, False if there is not enough pieces.
      */
     @Handler
-    public boolean removeNumberOfItemsFromStock(ItemBO processedItem){
-        //TODO do it in some transaction
+    public synchronized boolean removeNumberOfItemsFromStock(ItemBO processedItem){
         ItemBO itemInStock = getItem(processedItem.getSku());
         if(itemInStock.getAmount() >= processedItem.getAmount()){
             itemInStock.setAmount( itemInStock.getAmount() - processedItem.getAmount());

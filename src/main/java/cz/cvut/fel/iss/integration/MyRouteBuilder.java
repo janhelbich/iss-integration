@@ -27,8 +27,17 @@ import java.util.List;
 public class MyRouteBuilder extends RouteBuilder {
 
     final static String LOCAL_STOCK_URL = "jdbc:h2:tcp://localhost/~/exam"; //creds sa/sa
-    final static String SUPPLIER_A_URL = "http://localhost:8080/supplier-a/SupplierAService?wsdl";
-    final static String SUPPLIER_B_URL = "http://localhost:8080/supplier-b/SupplierBService?wsdl";
+    final static String SUPPLIER_A_URL = "cxf://http://localhost:8080/supplier-a/SupplierAService?"
+            + "wsdlURL=http://localhost:8080/supplier-a/SupplierAService?wsdl"
+            + "&serviceName=SupplierAService"
+            + "&portName=SupplierAPort"
+            +"&dataFormat=MESSAGE"
+            +"&username=webuser&password=JBoss.123";
+    final static String SUPPLIER_B_URL = "cxf://http://localhost:8080/supplier-b/SupplierBService?"
+            + "wsdlURL=http://localhost:8080/supplier-b/SupplierBService?wsdl"
+            + "&serviceName=SupplierBService"
+            + "&portName=SupplierBPort"
+            +"&dataFormat=MESSAGE";
     final static String ACCOUNTING_URL = "https://localhost:8443/accounting/rest/accounting/invoice/issue";
 
 
@@ -60,8 +69,17 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         //SOAP endpoint
         //TODO udelat pres Cxf
-        rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
-                .post().type(ObjednavkaDTO.class).outType(OutputResponse.class).to("direct:obj-preprocessSOAP");
+//        rest("/ordersSOAP").consumes("application/soap").produces("application/soap")
+//                .post().type(ObjednavkaDTO.class).outType(OutputResponse.class).to("direct:obj-preprocessSOAP");
+//
+//        CxfComponent cxfComponent = new CxfComponent(getContext());
+//        CxfEndpoint serviceEndpoint = new CxfEndpoint("localhost", cxfComponent);
+//        serviceEndpoint.setServiceClass(SOAPService.class);
+//
+//        errorHandler(noErrorHandler());
+//        from("/ordersSOAP").to("direct:objednavka-process");
+
+
 
 
         //
@@ -157,14 +175,6 @@ public class MyRouteBuilder extends RouteBuilder {
                 .to("direct:item-suppliers-availability")
                 .end();
 
-
-//        from("direct:item-local-availability").log("checking local availability");
-//                .transacted()
-//                .setHeader("zalohaInput",simple("${body}"))
-//                .inOut(LOCAL_STOCK_URL);
-//                .choice()
-//                    .when( /* TODO neni na sklade */).to("direct:item-suppliers-availability").endChoice()
-//                .end();
 
         from("direct:item-suppliers-availability").log("checking Suppliers availability")
                 //.transacted()
