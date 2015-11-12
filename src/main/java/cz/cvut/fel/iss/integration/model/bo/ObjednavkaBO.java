@@ -10,7 +10,7 @@ import java.util.List;
 public class ObjednavkaBO
 {
     
-    private int idObjednavka;
+    private Integer idObjednavka;
     private List<ItemBO> wantedItems;
     //private int customer; should it be defined here?
     
@@ -18,11 +18,11 @@ public class ObjednavkaBO
         this.wantedItems = new ArrayList<>();
     }
 
-    public int getIDobjed() {
+    public Integer getIDobjed() {
         return idObjednavka;
     }
 
-    public void setIDobjed(int IDobjed) {
+    public void setIDobjed(Integer IDobjed) {
         this.idObjednavka = IDobjed;
     }
 

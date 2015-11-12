@@ -53,8 +53,10 @@ public class LocalStockService {
         
         if(this.localStock.containsKey(wantedItem.getSku())){
             ItemBO localItem = this.localStock.get(wantedItem.getSku());
-            
+
             //return TRUE if localStock contains atleast wanted amount of items.
+            if (localItem.getAmount() >= wantedItem.getAmount()) wantedItem.setIsAvailable(true);
+            else wantedItem.setIsAvailable(false);
             return (localItem.getAmount() >= wantedItem.getAmount());
                 
         } else {

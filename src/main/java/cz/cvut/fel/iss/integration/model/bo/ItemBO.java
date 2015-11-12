@@ -28,14 +28,15 @@ public class ItemBO {
     private int amount;
 
     private ItemTypes itemType;
+
+    private boolean isAvailable;
     
     /**
      * TRUE - this item was marked as item with higher price than on local stock, so it is
      * possible only for VIP customers
      */
     private boolean vipStatus;
-    
-    
+
     public ItemBO() {
     }
 
@@ -99,8 +100,12 @@ public class ItemBO {
     @Override
     public String toString() {
             return "Item [sku=" + sku + ", price=" + price + ", amount=" + amount
-                            + "]";
+                    + ", itemType=" + itemType + ", isAvailable=" + isAvailable
+                    + ", vipStatus=" + vipStatus
+                    + "]";
     }
+
+
 
     public ItemTypes getItemType() {
         return itemType;
@@ -127,8 +132,13 @@ public class ItemBO {
     public void setVipStatus(boolean vipStatus) {
         this.vipStatus = vipStatus;
     }
-        
-    
-    
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setIsAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
+    }
 }
 

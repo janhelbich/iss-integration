@@ -37,7 +37,6 @@ public class ObjednavkaService
     public void isValid(ObjednavkaDTO o) throws InvalidObjednavkaDataFormat{
         //check products
         if(o.getWantedItems() == null || o.getWantedItems().isEmpty()){
-            //TODO HonzaŠ zatim chyta vyjimky
             throw new InvalidObjednavkaDataFormat();
         } else {
             for(ObjednavkaItemDTO item: o.getWantedItems()){
