@@ -35,12 +35,12 @@ public class ObjednavkaBO
     }
     public String toString()
     {
-        String s = "";
+        String s = this.idObjednavka + " ";
         for (ItemBO b : this.wantedItems)
         {
             s += " " + b.toString();
         }
-        return s;
+        return "[" + s + "]";
     }
     
 }
