@@ -33,5 +33,14 @@ public class ObjednavkaBO
     public void setWantedItems(List<ItemBO> wantedItems) {
         this.wantedItems = wantedItems;
     }
+    public String toString()
+    {
+        String s = "";
+        for (ItemBO b : this.wantedItems)
+        {
+            s += " " + b.toString();
+        }
+        return s;
+    }
     
 }

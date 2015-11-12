@@ -114,8 +114,8 @@ public class MyRouteBuilder extends RouteBuilder {
                         list.add(newItem);
                         return oldExchange;
                     }
-                })
-                    .log(">>Trying to process>>" + String.valueOf(simple("${body}")))
+                }).streaming().convertBodyTo(ItemBO.class)
+                    .log("[][][]>>Trying to process>>" + String.valueOf(simple("${body}")))
                     .inOut("direct:item-process")
                 .end()
                 .log(">>SPLITTED >>" + String.valueOf(simple("${body}")))
@@ -128,7 +128,7 @@ public class MyRouteBuilder extends RouteBuilder {
                         .to("direct:accounting-insertion").endChoice()
                     .otherwise().log("NonVIP customer VIP order attempt").endChoice()
                 .end()
-                .log(String.valueOf(simple("${body}")))
+                .log("Tohle zbylo" + String.valueOf(simple("${body}")))
 
                 .setBody(constant(null))
                 .setHeader("status", simple("OK"))
@@ -140,19 +140,21 @@ public class MyRouteBuilder extends RouteBuilder {
         //TODO
         from("direct:item-process").log(">>Item Processing>>" + String.valueOf(simple("${body}")))
                 .setProperty("item", simple("${body}"))
-                .setHeader("POM",simple("${body}"))
-                .bean(LocalStockService.class, "isInStock")
+                .setHeader("POM", simple("${body}"))
+                .setBody(simple("false"))
+                //.bean(LocalStockService.class, "isInStock")
                 .setBody(header("POM")).removeHeader("POM")
+                .setBody(simple("false"))
                 .choice()
-                    .when(simple("${body} == true")).log(">>Item available locally") //.when(simple("${body.stock} == LOCAL"))
-                    .otherwise().log(">>Need to look to suppliers")//.to("direct:item-suppliers-availability")
+                    .when(simple("${body} == true")).setBody(header("POM")).log(">>Item available locally") //.when(simple("${body.stock} == LOCAL"))
+                    .otherwise().setBody(header("POM")).log(">>Need to look to suppliers")//.to("direct:item-suppliers-availability")
                 .end();
 
 
-        from("direct:item-local-availability").log("checking local availability");
+//        from("direct:item-local-availability").log("checking local availability");
 //                .transacted()
 //                .setHeader("zalohaInput",simple("${body}"))
-//                .inOut(LOCAL_STOCK_URL)
+//                .inOut(LOCAL_STOCK_URL);
 //                .choice()
 //                    .when( /* TODO neni na sklade */).to("direct:item-suppliers-availability").endChoice()
 //                .end();
