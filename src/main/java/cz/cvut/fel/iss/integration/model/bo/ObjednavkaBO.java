@@ -18,12 +18,12 @@ public class ObjednavkaBO
         this.wantedItems = new ArrayList<>();
     }
 
-    public Integer getIDobjed() {
+    public Integer getIdObjednavka() {
         return idObjednavka;
     }
 
-    public void setIDobjed(Integer IDobjed) {
-        this.idObjednavka = IDobjed;
+    public void setIdObjednavka(Integer idObjednavka) {
+        this.idObjednavka = idObjednavka;
     }
 
     public List<ItemBO> getWantedItems() {
@@ -35,12 +35,12 @@ public class ObjednavkaBO
     }
     public String toString()
     {
-        String s = this.idObjednavka + " ";
+        String s = "idObjednavka: " + this.idObjednavka + " ";
         for (ItemBO b : this.wantedItems)
         {
             s += " " + b.toString();
         }
         return "[" + s + "]";
     }
-    
+
 }

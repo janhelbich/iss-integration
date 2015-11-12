@@ -9,14 +9,14 @@ package cz.cvut.fel.iss.integration.service;
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.bo.ItemTypes;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
+import org.apache.camel.ExchangeProperty;
+import org.apache.camel.Handler;
+
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-
-import org.apache.camel.ExchangeProperty;
-import org.apache.camel.Handler;
 
 /**
  *
@@ -55,8 +55,18 @@ public class LocalStockService {
             ItemBO localItem = this.localStock.get(wantedItem.getSku());
 
             //return TRUE if localStock contains atleast wanted amount of items.
-            if (localItem.getAmount() >= wantedItem.getAmount()) wantedItem.setIsAvailable(true);
-            else wantedItem.setIsAvailable(false);
+            if (localItem.getAmount() >= wantedItem.getAmount())
+            {
+                wantedItem.setPrice(localItem.getPrice());
+                wantedItem.setIsAvailable(true);
+                wantedItem.setItemType(ItemTypes.LOCAL_STOCK_INFO);
+            }
+            else
+            {
+                wantedItem.setPrice(localItem.getPrice());
+                wantedItem.setIsAvailable(false);
+                wantedItem.setItemType(ItemTypes.LOCAL_STOCK_INFO);
+            }
             return (localItem.getAmount() >= wantedItem.getAmount());
                 
         } else {

@@ -1,5 +1,7 @@
 package cz.cvut.fel.iss.integration;
 
+import cz.cvut.fel.iss.integration.model.CheapestItemPickerProcessor;
+import cz.cvut.fel.iss.integration.model.ObjednavkaVIPCheckProcessor;
 import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
@@ -9,7 +11,6 @@ import cz.cvut.fel.iss.integration.service.ObjednavkaService;
 import cz.cvut.fel.iss.integration.service.ResponseBuilder;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.apache.camel.processor.aggregate.AggregationStrategy;
 
@@ -99,7 +100,8 @@ public class MyRouteBuilder extends RouteBuilder {
         //
         from("direct:new-objednavka")
                 //.transacted()
-                .split(simple("${body.wantedItems}").resultType(ItemBO.class), new AggregationStrategy() {
+                .setHeader("objId", simple("${body.idObjednavka}"))
+                .split(simple("${body.wantedItems}")/*.resultType(ItemBO.class)/**/, new AggregationStrategy() {
                     @Override
                     public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
                         List<ItemBO> list = null;
@@ -119,16 +121,23 @@ public class MyRouteBuilder extends RouteBuilder {
                     .inOut("direct:item-process")
                 .end()
                 .log(">>SPLITTED >>" + String.valueOf(simple("${body}")))
-                .setHeader("orderItems", simple("${body}"))
-                //.bean(UserService.class, "checkForVIPStatus") //TODO dodelat metodu boolean checkForVIPStatus(Objednavka obj);
+
+                //update splitted items
+                .setProperty("id", simple("${header.objId}"))
+                .setProperty("items", simple("${body}"))
+                .bean(ObjednavkaService.class, "updateItems")
+
+                //Check for VIPOrder
+                .process(new ObjednavkaVIPCheckProcessor())
+                .log("\n VIPOrder: ${header.VIPOrder} \n VIPuser: ${header.VIPuser}")
+
                 .choice()
-                    .when(simple("${body} == true and ${header:VIP} == true")).log("VIP objednavka obdrzena")
+                    .when(simple("${header.VIPOrder} == true and ${header.VIPuser} == true")).log("VIP objednavka obdrzena")
                         .to("direct:accounting-insertion").endChoice()
-                    .when(simple("${body} == false")).log("Standardni objednavka obdrzena")
+                    .when(simple("${header.VIPOrder} == false")).log("Standardni objednavka obdrzena")
                         .to("direct:accounting-insertion").endChoice()
                     .otherwise().log("NonVIP customer VIP order attempt").endChoice()
                 .end()
-                .log("Tohle zbylo" + String.valueOf(simple("${body}")))
 
                 .setBody(constant(null))
                 .setHeader("status", simple("OK"))
@@ -137,17 +146,15 @@ public class MyRouteBuilder extends RouteBuilder {
 
 
         //Zpracovani Itemu
-        //TODO
+        //
         from("direct:item-process").log(">>Item Processing>>" + String.valueOf(simple("${body}")))
                 .setProperty("item", simple("${body}"))
-                .setHeader("POM", simple("${body}"))
-                .setBody(simple("false"))
-                //.bean(LocalStockService.class, "isInStock")
-                .setBody(header("POM")).removeHeader("POM")
+                .bean(LocalStockService.class, "isInStock")
                 .setBody(simple("false"))
                 .choice()
-                    .when(simple("${body} == true")).setBody(header("POM")).log(">>Item available locally") //.when(simple("${body.stock} == LOCAL"))
-                    .otherwise().setBody(header("POM")).log(">>Need to look to suppliers")//.to("direct:item-suppliers-availability")
+                    .when(simple("${body} == true")).setBody(simple("${property.item}")).removeProperty("item").log(">>Item available locally")
+                    .otherwise().setBody(simple("${property.item}")).removeProperty("item").log(">>Need to look to suppliers")
+                .to("direct:item-suppliers-availability")
                 .end();
 
 
@@ -160,29 +167,28 @@ public class MyRouteBuilder extends RouteBuilder {
 //                .end();
 
         from("direct:item-suppliers-availability").log("checking Suppliers availability")
-                .setHeader("localItem", simple("${body}"))
                 //.transacted()
+                .setHeader("localItem", simple("${body}"))
 
                 //dotaz na Supplier-A
-                .inOut(SUPPLIER_A_URL) //TODO volani supplierA
-                .unmarshal().soapjaxb()
-                .setProperty("supplierAItem", simple("${body}"))
-                .setBody(constant(null))
+                .log("POLLING SupplierA")
+//                .inOut(SUPPLIER_A_URL) //TODO volani supplierA
+//                .unmarshal().soapjaxb()
+                .setHeader("supplierAItem", simple("${body}"))
+//                .setBody(constant(null))
+                .log(String.valueOf(simple("${body}")))
 
                 //dotaz na Supplier-B
-                .inOut(SUPPLIER_B_URL) //TODO volani supplierB
-                .unmarshal().soapjaxb()
-                .setProperty("supplierBItem", simple("${body}"))
+                .log("POLLING SupplierB")
+//                .inOut(SUPPLIER_B_URL) //TODO volani supplierB
+//                .unmarshal().soapjaxb()
+                .setHeader("supplierBItem", simple("${body}"))
+                .log(String.valueOf(simple("${body}")))
+
+
                 .setBody(constant(null))
-
-                //Vyber nejlevnejsi ceny
-                .bean(LocalStockService.class, "selectCheapestItem")
-                .setProperty("rightItem", simple("${body}"))
-
-                //Kontrola statutu zbozi a pripadny zapis do hlavicek
-                .choice()
-                    .when(simple("${body}.vipStatus == true")).setHeader("VIP",constant(true)).endChoice()
-                .end();
+                .log("L: ${header.localItem} sA: ${header.supplierAItem} sB: ${header.supplierBItem}")
+                .process(new CheapestItemPickerProcessor());
 
 
         //
@@ -213,15 +219,20 @@ public class MyRouteBuilder extends RouteBuilder {
         //Odpoved
         //
         from("direct:createResponse").log("Generating response")
+                .setProperty("id", simple("${header.objId}"))
+                .bean(ObjednavkaService.class, "get")
                 .setHeader("objednavka", simple("${body}"))
+
                 .setBody(constant(null))
+
+                //Generovani odpovedi
                 .bean(ResponseBuilder.class, "generateNewResponse")
                 .choice()
-                    .when(simple("${header:inputFormat} == 'SOAP' ")).marshal().soapjaxb().endChoice()
-                    .otherwise().marshal().json(JsonLibrary.Jackson,true).endChoice()
+                    .when(simple("${header.inputFormat} == 'SOAP' ")).marshal().soapjaxb().endChoice()
+                    .otherwise()/*.marshal().json(JsonLibrary.Jackson, true)/**/.endChoice()
                 .end()
-                .removeHeader("*")
-                .log("Response generated in" + String.valueOf(simple("${property:outputFormat}")));
+                .log("Response generated")
+                .removeHeader("*");
     }
 
 }

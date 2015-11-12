@@ -1,13 +1,20 @@
 package cz.cvut.fel.iss.integration.service;
 
+import cz.cvut.fel.iss.integration.model.bo.ItemBO;
 import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaDTO;
 import cz.cvut.fel.iss.integration.model.dto.ObjednavkaItemDTO;
 import cz.cvut.fel.iss.integration.model.exceptions.InvalidObjednavkaDataFormat;
 import cz.cvut.fel.iss.integration.model.helper.ObjednavkaConverter;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+
+import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
 
 /**
@@ -20,6 +27,8 @@ public class ObjednavkaService
 {
     static ObjednavkaService singleton = new ObjednavkaService();
     static AtomicInteger lastOrderId = new AtomicInteger();
+    static Map<Integer,ObjednavkaBO> repository = new ConcurrentHashMap<>();
+
 
     public static ObjednavkaService getInstance()
     {
@@ -57,6 +66,27 @@ public class ObjednavkaService
     public ObjednavkaBO create(ObjednavkaDTO o){
         int newOrderId = lastOrderId.incrementAndGet();
         ObjednavkaConverter objConv = new ObjednavkaConverter();
-        return objConv.getObjednavka(o, newOrderId);
+        ObjednavkaBO obj = objConv.getObjednavka(o, newOrderId);
+        repository.put(obj.getIdObjednavka(),obj);
+        return obj;
+    }
+
+    @Handler
+    public ObjednavkaBO get(@ExchangeProperty("id") Integer id)
+    {
+        return repository.get(id);
+    }
+
+    @Handler
+    public ObjednavkaBO updateItems(@ExchangeProperty("id") Integer id,@ExchangeProperty("items")  ArrayList<ItemBO> items)
+    {
+        repository.get(id).setWantedItems(items);
+        return repository.get(id);
+    }
+
+    @Handler
+    public void remove(@ExchangeProperty("id") Integer id)
+    {
+        if (repository.containsKey(id)) repository.remove(id);
     }
 }

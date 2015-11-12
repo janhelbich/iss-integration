@@ -1,6 +1,5 @@
 package cz.cvut.fel.iss.integration.model.bo;
 
-import java.util.List;
 import java.util.Map;
 
 /**

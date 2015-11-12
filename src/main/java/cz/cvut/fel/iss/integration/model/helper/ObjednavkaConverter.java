@@ -22,7 +22,7 @@ public class ObjednavkaConverter
     public ObjednavkaBO getObjednavka(ObjednavkaDTO dto, int newOrderId)
     {
         ObjednavkaBO newOrder = new ObjednavkaBO();
-        newOrder.setIDobjed(newOrderId);
+        newOrder.setIdObjednavka(newOrderId);
         newOrder.setWantedItems(getItemsBO(dto.getWantedItems()));
         return newOrder;
     }

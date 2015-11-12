@@ -1,8 +1,10 @@
 package cz.cvut.fel.iss.integration.service;
 
+import cz.cvut.fel.iss.integration.model.bo.ObjednavkaBO;
 import cz.cvut.fel.iss.integration.model.bo.OutputResponse;
 import cz.cvut.fel.iss.integration.model.helper.ResponseFormatRepository;
 import org.apache.camel.Exchange;
+import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Message;
 
 import java.util.HashMap;
@@ -30,7 +32,8 @@ public class ResponseBuilder
             case OK: {
                 if (exch.getIn().getHeader("objednavka") != null)
                 {
-                    response.getVars().put("objednavka", (String) exch.getIn().getHeader("status"));
+                    response.getVars().put("objednavka-status", (String) exch.getIn().getHeader("status"));
+                    response.getVars().put("objednavka", exch.getIn().getHeader("objednavka").toString());
                 }
                 else response.getVars().put("objednavka","UNDEFINED");
                 break;
